@@ -68,17 +68,21 @@ int main(void)
 
   while (1)
   {
+
+
 	  pressure = lps25hb_get_pressure();
 	  temperature = hts221_get_temp();
 	  humidity = hts221_get_humid();
 
 
-	  //altitude = ((pow(pressure, (1./5.257)) - 1) * (temperature+273.15))/(-0.0065);
+	  //altitude=44330*(pow(pressure , (1.0/5.255)) - 1);	//nadmorska vyska
 
-	  altitude=44330*(pow(pressure , (1.0/5.255)) - 1);
+	  altitude = ((pow(pressure/1013.25, (8.31432*0.0065)/(9.80665*0.0289644)) - 1) * temperature)/0.0065; //relativna nm.v.
+
+
 
 	  memset(formated_text, '\0', sizeof(formated_text));
-	  sprintf(formated_text, "%2.1f, %2d, %0.4f, %0.4f\r", temperature, humidity, pressure, altitude);
+	  sprintf(formated_text, "%2.10f, %2d, %0.3f, %0.4f\r", temperature, humidity, pressure, altitude);
 	  USART2_PutBuffer((uint8_t*)formated_text, strlen(formated_text));
 	  LL_mDelay(50);
   }
