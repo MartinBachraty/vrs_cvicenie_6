@@ -28,12 +28,20 @@
 #include "stdio.h"
 #include "string.h"
 #include "dma.h"
+#include "../lps25hb_bar/lps25hb.h"
+#include "../hts221_temp/hts221.h"
+#include "math.h"
+
+
 
 #define CHAR_BUFF_SIZE	30
 
-uint8_t temp = 0;
-float mag[3], acc[3];
-char formated_text[30], value_x[10], value_y[10], value_z[10];
+
+
+
+float temperature = 0, pressure = 0,altitude = 0;
+int humidity = 0;
+char formated_text[50];
 
 void SystemClock_Config(void);
 
@@ -53,23 +61,30 @@ int main(void)
   MX_USART2_UART_Init();
 
   lsm6ds0_init();
+  hts221_init();
+  lps25hb_init();
+
+
 
   while (1)
   {
-	  //os			   x      y        z
-	  lsm6ds0_get_acc(acc, (acc+1), (acc+2));
+	  pressure = lps25hb_get_pressure();
+	  temperature = hts221_get_temp();
+	  humidity = hts221_get_humid();
+
+
+	  //altitude = ((pow(pressure, (1./5.257)) - 1) * (temperature+273.15))/(-0.0065);
+
+	  altitude=44330*(pow(pressure , (1.0/5.255)) - 1);
+
 	  memset(formated_text, '\0', sizeof(formated_text));
-	  sprintf(formated_text, "%0.4f,%0.4f,%0.4f\r", acc[0], acc[1], acc[2]);
+	  sprintf(formated_text, "%2.1f, %2d, %0.4f, %0.4f\r", temperature, humidity, pressure, altitude);
 	  USART2_PutBuffer((uint8_t*)formated_text, strlen(formated_text));
-	  LL_mDelay(10);
+	  LL_mDelay(50);
   }
 }
 
 
-/**
-  * @brief System Clock Configuration
-  * @retval None
-  */
 void SystemClock_Config(void)
 {
   LL_FLASH_SetLatency(LL_FLASH_LATENCY_0);
